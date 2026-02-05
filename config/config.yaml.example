@@ -1,0 +1,10 @@
+app:
+  port:       8080
+  log_level:  "debug"
+db:
+  host:       "host"
+  port:       5432
+  user:       "name"
+  password:   "pass"
+  name:       "nameDB"
+  sslmode:    "disable"
