@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewDatabase(cfg *Config, logger *slog.Logger) (*pgx.Conn, error) {
+func NewDatabase(cfg *Config, logger *slog.Logger) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
 		cfg.DB.User,
@@ -23,18 +23,19 @@ func NewDatabase(cfg *Config, logger *slog.Logger) (*pgx.Conn, error) {
 	logger.Debug("Creating database connection", "dsn", dsn)
 
 	ctx := context.Background()
-	conn, err := pgx.Connect(ctx, dsn)
+
+	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
 		logger.Error("Failed to connect to database", "error", err)
 		return nil, err
 	}
 
-	if err := conn.Ping(ctx); err != nil {
+	if err := pool.Ping(ctx); err != nil {
 		logger.Error("Database ping failed", "error", err)
 		return nil, err
 	}
 
 	logger.Info("Database connection established successfully")
-	return conn, nil
+	return pool, nil
 }
 

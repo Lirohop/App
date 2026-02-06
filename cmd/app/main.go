@@ -4,7 +4,6 @@ import (
 	"app/internal/config"
 	"app/internal/database"
 	"app/internal/repository"
-	"context"
 	"log/slog"
 	"os"
 )
@@ -22,17 +21,19 @@ func main() {
 	slog.SetDefault(logger)
 	logger.Info("application starter", "port", cfg.App.Port, "log_level", cfg.App.LogLevel)
 
-	conn, err := database.NewDatabase(cfg, logger)
+	pool, err := database.NewDatabase(cfg, logger)
 	if err != nil {
 		logger.Error("Failed to connect to database, exiting", "error", err)
 		panic(err)
 	}
-	defer conn.Close(context.Background())
+	defer pool.Close()
 
 	logger.Debug("Database connection object created, passing to repository")
 
-	rep := repository.NewSubscriptionRepository(conn, logger)
+	rep := repository.NewSubscriptionRepository(pool, logger)
 	logger.Info("Repository initialized")
+
+	_ = rep // del
 
 	//TODO regist handlers
 
