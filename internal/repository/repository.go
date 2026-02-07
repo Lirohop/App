@@ -19,17 +19,18 @@ func NewSubscriptionRepository(db *pgxpool.Pool, logger *slog.Logger) *Subscript
 }
 
 func (r *SubscriptionRepository) Create(ctx context.Context, s *model.Subscription) error {
-	_, err := r.db.Exec(ctx,
-		`INSERT INTO subscriptions(id, service_name, price, user_id, start_date, end_date)
-		 VALUES($1, $2, $3, $4, $5, $6)`,
-		s.ID, s.ServiceName, s.Price, s.UserId, s.StartDate, s.EndDate)
+	err := r.db.QueryRow(ctx,
+        `INSERT INTO subscriptions(service_name, price, user_id, start_date, end_date)
+         VALUES($1, $2, $3, $4, $5)
+         RETURNING id`, 
+         s.ServiceName, s.Price, s.UserId, s.StartDate, s.EndDate).Scan(&s.ID)
 
 	if err != nil {
 		r.logger.Error("failed to create subscription", "error", err, "user_id", s.UserId)
 		return err
 	}
 
-	r.logger.Info("subscription created", "id", s.ID)
+	r.logger.Info("subscription created in repository", "id", s.ID)
 
 	return nil
 }
@@ -42,7 +43,7 @@ func (r *SubscriptionRepository) Delete(ctx context.Context, id UUID) error {
 		return err
 	}
 
-	r.logger.Info("subscription was deleted", "id", id)
+	r.logger.Info("subscription was deleted in repository", "id", id)
 
 	return nil
 }
@@ -72,16 +73,16 @@ func (r *SubscriptionRepository) Update(
 		return err
 	}
 
-	r.logger.Info("subscription was updated", "id", s.ID)
+	r.logger.Info("subscription was updated in repository", "id", s.ID)
 
 	return nil
 }
 
-func (r *SubscriptionRepository) GetByID(ctx context.Context, id string) (*model.Subscription, error) {
+func (r *SubscriptionRepository) GetByID(ctx context.Context, id UUID) (*model.Subscription, error) {
 	var s model.Subscription
 
 	err := r.db.QueryRow(ctx,
-		`SELECT id, sevice_name, price, user_id, start_date, end_date
+		`SELECT id, service_name, price, user_id, start_date, end_date
 	 From subscriptions
 	 Where id=$1`, id).Scan(
 		&s.ID,
@@ -91,6 +92,7 @@ func (r *SubscriptionRepository) GetByID(ctx context.Context, id string) (*model
 		&s.EndDate)
 
 	if err != nil {
+		r.logger.Error("failed to find subscription by id", "error", err, "id", id)
 		return nil, err
 	}
 
@@ -104,12 +106,13 @@ func (r *SubscriptionRepository) List(ctx context.Context) ([]*model.Subscriptio
 		`SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`)
 
 	if err != nil {
+		r.logger.Error("failed to select subscriptions for list", "error", err)
 		return nil, err
 	}
-
 	defer rows.Close()
 
-	var subs []*model.Subscription
+	subs := make([]*model.Subscription, 0)
+
 	for rows.Next() {
 		var s model.Subscription
 		if err := rows.Scan(
@@ -120,12 +123,18 @@ func (r *SubscriptionRepository) List(ctx context.Context) ([]*model.Subscriptio
 			&s.StartDate,
 			&s.EndDate,
 		); err != nil {
+			r.logger.Error("failed to scan subscription row", "error", err)
 			return nil, err
 		}
 		subs = append(subs, &s)
 	}
 
-	r.logger.Info("subscriptions were found", slog.Int("count", len(subs)))
+    if err := rows.Err(); err != nil {
+		r.logger.Error("error during subscriptions rows iteration", "error", err)
+        return nil, err;
+    }
+
+	r.logger.Info("subscriptions successfully fetched", "count", len(subs))
 
 	return subs, nil
 
