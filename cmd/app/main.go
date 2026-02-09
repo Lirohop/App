@@ -6,6 +6,8 @@ import (
 	"app/internal/handler"
 	"app/internal/repository"
 	"app/internal/service"
+	 httpSwagger "github.com/swaggo/http-swagger"
+	 _ "app/docs"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -17,6 +19,7 @@ const (
 	logDev   = "dev" //default
 	logProd  = "prod"
 )
+
 
 func main() {
 
@@ -75,6 +78,8 @@ func main() {
 		}
 		subHandler.TotalCost(w, r)
 	})
+
+	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	logger.Debug("Startup complete, ready to handle requests")
 

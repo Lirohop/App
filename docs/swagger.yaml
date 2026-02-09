@@ -1,0 +1,129 @@
+definitions:
+  handler.TotalCostResponse:
+    properties:
+      total:
+        type: integer
+    type: object
+  model.Subscription:
+    properties:
+      end_date:
+        type: string
+      id:
+        type: string
+      price:
+        type: integer
+      service_name:
+        type: string
+      start_date:
+        type: string
+      user_id:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /subscriptions:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/model.Subscription'
+            type: array
+        "400":
+          description: Bad request
+          schema:
+            type: string
+      summary: Get all subscriptions
+      tags:
+      - subscriptions
+  /subscriptions/delete:
+    delete:
+      parameters:
+      - description: Subscription ID
+        format: uuid
+        in: query
+        name: id
+        required: true
+        type: string
+      responses:
+        "201":
+          description: Deleted
+        "400":
+          description: Bad request
+          schema:
+            type: string
+      summary: Delete subscription by ID
+      tags:
+      - subscriptions
+  /subscriptions/get:
+    get:
+      parameters:
+      - description: Subscription ID
+        format: uuid
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Subscription'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+      summary: Get subscription by ID
+      tags:
+      - subscriptions
+  /subscriptions/total-cost:
+    get:
+      description: Calculate total cost for subscriptions in period
+      parameters:
+      - description: User ID
+        format: uuid
+        in: query
+        name: userId
+        required: true
+        type: string
+      - description: Service name
+        in: query
+        name: serviceName
+        type: string
+      - description: Start month (MM-YYYY)
+        example: 01-2025
+        in: query
+        name: start
+        required: true
+        type: string
+      - description: End month (MM-YYYY)
+        example: 12-2025
+        in: query
+        name: end
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.TotalCostResponse'
+        "400":
+          description: Bad request
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Calculate total subscriptions cost
+      tags:
+      - subscriptions
+swagger: "2.0"

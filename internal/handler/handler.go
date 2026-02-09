@@ -37,6 +37,17 @@ func NewSubscriptionHandler(
 	}
 }
 
+// Create subscription
+// @Summary Create subscription
+// @Description Create new subscription for user
+// @Tags subscriptions
+// @Accept json
+// @Produce json
+// @Param subscription body CreateSubscriptionRequest true "Subscription data"
+// @Success 201 "Created"
+// @Failure 400 {string} string "Bad request"
+// @Router /subscriptions [post]
+
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -84,6 +95,13 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// Delete subscription
+// @Summary Delete subscription by ID
+// @Tags subscriptions
+// @Param id query string true "Subscription ID" format(uuid)
+// @Success 201 "Deleted"
+// @Failure 400 {string} string "Bad request"
+// @Router /subscriptions/delete [delete]
 func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -107,6 +125,14 @@ func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// Get subscription by ID
+// @Summary Get subscription by ID
+// @Tags subscriptions
+// @Produce json
+// @Param id query string true "Subscription ID" format(uuid)
+// @Success 200 {object} model.Subscription
+// @Failure 400 {string} string "Bad request"
+// @Router /subscriptions/get [get]
 func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
@@ -138,6 +164,13 @@ func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// List subscriptions
+// @Summary Get all subscriptions
+// @Tags subscriptions
+// @Produce json
+// @Success 200 {array} model.Subscription
+// @Failure 400 {string} string "Bad request"
+// @Router /subscriptions [get]
 func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -155,6 +188,19 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Calculate total subscriptions cost
+// @Summary Calculate total subscriptions cost
+// @Description Calculate total cost for subscriptions in period
+// @Tags subscriptions
+// @Produce json
+// @Param userId query string true "User ID" format(uuid)
+// @Param serviceName query string false "Service name"
+// @Param start query string true "Start month (MM-YYYY)" example(01-2025)
+// @Param end query string true "End month (MM-YYYY)" example(12-2025)
+// @Success 200 {object} TotalCostResponse
+// @Failure 400 {string} string "Bad request"
+// @Failure 500 {string} string "Internal server error"
+// @Router /subscriptions/total-cost [get]
 func (h *SubscriptionHandler) TotalCost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
