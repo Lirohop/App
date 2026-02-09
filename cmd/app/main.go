@@ -3,9 +3,11 @@ package main
 import (
 	"app/internal/config"
 	"app/internal/database"
+	"app/internal/handler"
 	"app/internal/repository"
 	"app/internal/service"
 	"log/slog"
+	"net/http"
 	"os"
 )
 
@@ -38,7 +40,18 @@ func main() {
 
 	_ = serv
 
-	//TODO regist handlers
+	subHandler := handler.NewSubscriptionHandler(subService, logger)
+
+	http.HandleFunc("/subscriptions", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			subHandler.Create(w, r)
+		case http.MethodGet:
+			subHandler.List(w, r)
+		default:
+			w.WriteHeader(http.StatusMethodNotAllowed)
+		}
+	})
 
 	logger.Debug("Startup complete, ready to handle requests")
 

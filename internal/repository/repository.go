@@ -195,11 +195,21 @@ func (r *SubscriptionRepository) GetByUserAndService(ctx context.Context, userId
 		&s.EndDate)
 
 	if err != nil {
-		r.logger.Error("???")
+		r.logger.Error(
+			"failed to get subscription by user and service",
+			"user_id", userId,
+			"service_name", serviceName,
+			"error", err,
+		)
 		return nil, err
 	}
 
-	r.logger.Info("???")
+	r.logger.Info(
+		"subscription found",
+		"user_id", userId,
+		"service_name", serviceName,
+		"subscription_id", s.ID,
+	)
 
 	return &s, nil
 }
