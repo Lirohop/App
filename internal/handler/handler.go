@@ -23,6 +23,10 @@ type CreateSubscriptionRequest struct {
 	EndMonth    *string `json:"end_month"`   // optional
 }
 
+type TotalCostResponse struct {
+	Total int `json:"total"`
+}
+
 func NewSubscriptionHandler(
 	service *service.SubscriptionService,
 	logger *slog.Logger,
@@ -78,4 +82,124 @@ func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *SubscriptionHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+
+	id, err := utils.ParseUUIDFromString(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.service.DeleteSubscription(ctx, id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *SubscriptionHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+
+	id, err := utils.ParseUUIDFromString(idStr)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	sub, err := h.service.GetSubscriptionById(ctx, id)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(sub); err != nil {
+		http.Error(w, "failed to encode subscriptions", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	subs, err := h.service.List(ctx)
+	if err != nil {
+		http.Error(w, "invalid list", http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(subs); err != nil {
+		http.Error(w, "failed to encode subscriptions", http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func (h *SubscriptionHandler) TotalCost(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Получаем query-параметры
+	userIDStr := r.URL.Query().Get("userId")
+	if userIDStr == "" {
+		http.Error(w, "missing userId", http.StatusBadRequest)
+		return
+	}
+	userID, err := utils.ParseUUIDFromString(userIDStr)
+	if err != nil {
+		http.Error(w, "invalid userId", http.StatusBadRequest)
+		return
+	}
+
+	serviceName := r.URL.Query().Get("serviceName") 
+
+	startStr := r.URL.Query().Get("start")
+	endStr := r.URL.Query().Get("end")
+	if startStr == "" || endStr == "" {
+		http.Error(w, "missing start or end", http.StatusBadRequest)
+		return
+	}
+
+	startDate, err := utils.ParseMonthYear(startStr)
+	if err != nil {
+		http.Error(w, "invalid start date", http.StatusBadRequest)
+		return
+	}
+
+	endDate, err := utils.ParseMonthYear(endStr)
+	if err != nil {
+		http.Error(w, "invalid end date", http.StatusBadRequest)
+		return
+	}
+
+	total, err := h.service.CalculateSubscriptionsTotalCost(ctx, userID, serviceName, startDate, endDate)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(TotalCostResponse{Total: total}); err != nil {
+		http.Error(w, "failed to encode response", http.StatusInternalServerError)
+		return
+	}
 }

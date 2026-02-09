@@ -6,6 +6,7 @@ import (
 	"app/internal/handler"
 	"app/internal/repository"
 	"app/internal/service"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -36,9 +37,7 @@ func main() {
 	rep := repository.NewSubscriptionRepository(pool, logger)
 	logger.Info("Repository initialized")
 
-	serv := service.NewSubscriptionService(rep, logger)
-
-	_ = serv
+	subService := service.NewSubscriptionService(rep, logger)
 
 	subHandler := handler.NewSubscriptionHandler(subService, logger)
 
@@ -53,8 +52,37 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/subscriptions/get", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		subHandler.GetByID(w, r)
+	})
+
+	http.HandleFunc("/subscriptions/delete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		subHandler.Delete(w, r)
+	})
+
+	http.HandleFunc("/subscriptions/total-cost", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		subHandler.TotalCost(w, r)
+	})
+
 	logger.Debug("Startup complete, ready to handle requests")
 
+	addr := fmt.Sprintf(":%d", cfg.App.Port)
+	logger.Info("HTTP server listening", "addr", addr)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		logger.Error("Server stopped unexpectedly", "error", err)
+	}
 }
 
 func setupLogger(logLevel string) (logger *slog.Logger) {
