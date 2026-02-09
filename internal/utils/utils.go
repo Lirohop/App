@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -44,4 +45,15 @@ func ParseMonthYear(s string) (time.Time, error) {
 		0, 0, 0, 0,
 		time.UTC,
 	), nil
+}
+
+func ParseMonthYearToString(time time.Time) string {
+	strMonth := strconv.Itoa(int(time.Month()))
+
+	if len(strMonth) == 1{
+		strMonth = "0" + strMonth
+	}
+	
+	s :=  strMonth + "-" + strconv.Itoa(time.Year())
+	return s
 }

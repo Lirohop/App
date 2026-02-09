@@ -1,13 +1,14 @@
 package handler
 
 import (
-	"app/internal/model"
-	"app/internal/service"
-	"app/internal/utils"
 	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/Lirohop/App/internal/model"
+	"github.com/Lirohop/App/internal/service"
+	"github.com/Lirohop/App/internal/utils"
 )
 
 type SubscriptionHandler struct {
@@ -19,8 +20,17 @@ type CreateSubscriptionRequest struct {
 	ServiceName string  `json:"service_name"`
 	Price       int     `json:"price"`
 	UserID      string  `json:"user_id"`
-	StartMonth  string  `json:"start_month"` // "07-2025"
-	EndMonth    *string `json:"end_month"`   // optional
+	StartMonth  string  `json:"start_month"`
+	EndMonth    *string `json:"end_month"`
+}
+
+type SubscriptionDTO struct {
+	ID          string  `json:"id"`
+	ServiceName string  `json:"service_name"`
+	Price       int     `json:"price"`
+	UserID      string  `json:"user_id"`
+	StartMonth  string  `json:"start_month"`
+	EndMonth    *string `json:"end_month,omitempty"`
 }
 
 type TotalCostResponse struct {
@@ -47,7 +57,6 @@ func NewSubscriptionHandler(
 // @Success 201 "Created"
 // @Failure 400 {string} string "Bad request"
 // @Router /subscriptions [post]
-
 func (h *SubscriptionHandler) Create(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -180,8 +189,28 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := make([]SubscriptionDTO, len(subs))
+	for i, s := range subs {
+		start := utils.ParseMonthYearToString(s.StartDate)
+
+		var end *string
+		if s.EndDate != nil {
+			e := utils.ParseMonthYearToString(*s.EndDate)
+			end = &e
+		}
+
+		resp[i] = SubscriptionDTO{
+			ID:          s.ID.String(),
+			ServiceName: s.ServiceName,
+			Price:       s.Price,
+			UserID:      s.UserId.String(),
+			StartMonth:  start,
+			EndMonth:    end,
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(subs); err != nil {
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
 		http.Error(w, "failed to encode subscriptions", http.StatusInternalServerError)
 		return
 	}
@@ -204,7 +233,6 @@ func (h *SubscriptionHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *SubscriptionHandler) TotalCost(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// Получаем query-параметры
 	userIDStr := r.URL.Query().Get("userId")
 	if userIDStr == "" {
 		http.Error(w, "missing userId", http.StatusBadRequest)
@@ -216,7 +244,7 @@ func (h *SubscriptionHandler) TotalCost(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	serviceName := r.URL.Query().Get("serviceName") 
+	serviceName := r.URL.Query().Get("serviceName")
 
 	startStr := r.URL.Query().Get("start")
 	endStr := r.URL.Query().Get("end")

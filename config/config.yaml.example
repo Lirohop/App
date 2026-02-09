@@ -2,9 +2,9 @@ app:
   port:       8080
   log_level:  "debug"
 db:
-  host:       "host"
+  host:       "db"
   port:       5432
-  user:       "name"
-  password:   "pass"
-  name:       "nameDB"
+  user:       "postgres"
+  password:   "postgres"
+  name:       "subscriptions"
   sslmode:    "disable"

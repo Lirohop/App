@@ -1,13 +1,13 @@
 package main
 
 import (
-	"app/internal/config"
-	"app/internal/database"
-	"app/internal/handler"
-	"app/internal/repository"
-	"app/internal/service"
+	"github.com/Lirohop/App/internal/config"
+	"github.com/Lirohop/App/internal/database"
+	"github.com/Lirohop/App/internal/handler"
+	"github.com/Lirohop/App/internal/repository"
+	"github.com/Lirohop/App/internal/service"
 	 httpSwagger "github.com/swaggo/http-swagger"
-	 _ "app/docs"
+	 _ "github.com/Lirohop/App/docs"
 	"fmt"
 	"log/slog"
 	"net/http"

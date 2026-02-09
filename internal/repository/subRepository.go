@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"app/internal/model"
+	"github.com/Lirohop/App/internal/model"
 	"context"
 	"log/slog"
 

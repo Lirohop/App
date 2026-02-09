@@ -1,9 +1,9 @@
 package service
 
 import (
-	"app/internal/model"
-	"app/internal/repository"
-	"app/internal/utils"
+	"github.com/Lirohop/App/internal/model"
+	"github.com/Lirohop/App/internal/repository"
+	"github.com/Lirohop/App/internal/utils"
 	"context"
 	"errors"
 	"log/slog"

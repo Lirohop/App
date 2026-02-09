@@ -1,7 +1,7 @@
 package database
 
 import (
-	. "app/internal/config"
+	. "github.com/Lirohop/App/internal/config"
 	"context"
 	"fmt"
 	"log/slog"
