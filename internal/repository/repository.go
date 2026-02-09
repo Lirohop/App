@@ -20,10 +20,10 @@ func NewSubscriptionRepository(db *pgxpool.Pool, logger *slog.Logger) *Subscript
 
 func (r *SubscriptionRepository) Create(ctx context.Context, s *model.Subscription) error {
 	err := r.db.QueryRow(ctx,
-        `INSERT INTO subscriptions(service_name, price, user_id, start_date, end_date)
+		`INSERT INTO subscriptions(service_name, price, user_id, start_date, end_date)
          VALUES($1, $2, $3, $4, $5)
-         RETURNING id`, 
-         s.ServiceName, s.Price, s.UserId, s.StartDate, s.EndDate).Scan(&s.ID)
+         RETURNING id`,
+		s.ServiceName, s.Price, s.UserId, s.StartDate, s.EndDate).Scan(&s.ID)
 
 	if err != nil {
 		r.logger.Error("failed to create subscription", "error", err, "user_id", s.UserId)
@@ -101,6 +101,47 @@ func (r *SubscriptionRepository) GetByID(ctx context.Context, id UUID) (*model.S
 	return &s, nil
 }
 
+func (r *SubscriptionRepository) GetListByUserID(ctx context.Context, userId UUID) ([]*model.Subscription, error) {
+
+	rows, err := r.db.Query(ctx,
+		`SELECT id, service_name, price, user_id, start_date, end_date 
+		From subscriptions
+	 	Where user_id=$1`, userId)
+
+	if err != nil {
+		// r.logger.Error("failed to select subscriptions from user id", "error", err, "userId", userId)
+		return nil, err
+	}
+	defer rows.Close()
+
+	subs := make([]*model.Subscription, 0)
+
+	for rows.Next() {
+		var s model.Subscription
+		if err := rows.Scan(
+			&s.ID,
+			&s.ServiceName,
+			&s.Price,
+			&s.UserId,
+			&s.StartDate,
+			&s.EndDate,
+		); err != nil {
+			r.logger.Error("failed to scan subscription row", "error", err)
+			return nil, err
+		}
+		subs = append(subs, &s)
+	}
+
+	if err := rows.Err(); err != nil {
+		r.logger.Error("error during subscriptions rows iteration", "error", err)
+		return nil, err
+	}
+
+	r.logger.Info("subscriptions successfully fetched", "count", len(subs))
+
+	return subs, nil
+}
+
 func (r *SubscriptionRepository) List(ctx context.Context) ([]*model.Subscription, error) {
 	rows, err := r.db.Query(ctx,
 		`SELECT id, service_name, price, user_id, start_date, end_date FROM subscriptions`)
@@ -129,13 +170,36 @@ func (r *SubscriptionRepository) List(ctx context.Context) ([]*model.Subscriptio
 		subs = append(subs, &s)
 	}
 
-    if err := rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		r.logger.Error("error during subscriptions rows iteration", "error", err)
-        return nil, err;
-    }
+		return nil, err
+	}
 
 	r.logger.Info("subscriptions successfully fetched", "count", len(subs))
 
 	return subs, nil
+}
 
+func (r *SubscriptionRepository) GetByUserAndService(ctx context.Context, userId UUID, serviceName string) (*model.Subscription, error) {
+	var s model.Subscription
+
+	err := r.db.QueryRow(ctx,
+		`SELECT id, service_name, price, user_id, start_date, end_date
+	 From subscriptions
+	 Where user_id=$1 and service_name=$2`, userId, serviceName).Scan(
+		&s.ID,
+		&s.ServiceName,
+		&s.Price,
+		&s.UserId,
+		&s.StartDate,
+		&s.EndDate)
+
+	if err != nil {
+		r.logger.Error("???")
+		return nil, err
+	}
+
+	r.logger.Info("???")
+
+	return &s, nil
 }

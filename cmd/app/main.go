@@ -37,19 +37,6 @@ func main() {
 	serv := service.NewSubscriptionService(rep, logger)
 
 	_ = serv
-	// serv.CreateSubscription(ctx,
-	// 	&model.Subscription{
-	// 		ServiceName: "yandex",
-	// 		Price:       400,
-	// 		UserId:      uuid.New(),
-	// 		StartDate: time.Date(
-	// 			2025,
-	// 			time.July,
-	// 			1,
-	// 			0, 0, 0, 0,
-	// 			time.UTC,
-	// 		),
-	// 	})
 
 	//TODO regist handlers
 
