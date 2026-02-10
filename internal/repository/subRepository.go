@@ -109,7 +109,6 @@ func (r *SubscriptionRepository) GetListByUserID(ctx context.Context, userId UUI
 	 	Where user_id=$1`, userId)
 
 	if err != nil {
-		// r.logger.Error("failed to select subscriptions from user id", "error", err, "userId", userId)
 		return nil, err
 	}
 	defer rows.Close()
